@@ -1,0 +1,35 @@
+{
+  "name": "ai-portfolio-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-managed personal Operating System and 3D portfolio monorepo",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "keywords": [
+    "portfolio",
+    "ai-agent",
+    "fastapi",
+    "nextjs",
+    "gemini",
+    "pgvector"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

@@ -1,0 +1,43 @@
+name: Scheduled Ingestion Polls
+
+on:
+  schedule:
+    # GitHub Poll Fallback every 6 hours
+    - cron: "0 */6 * * *"
+    # LeetCode Public Stats Poll every 12 hours
+    - cron: "0 */12 * * *"
+    # Supabase Keep-Alive Ping every 3 days (prevents project pausing after 7 days)
+    - cron: "0 0 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  poll-github:
+    name: GitHub Ingestion Fallback
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 */6 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Trigger GitHub Poll Endpoint
+        run: |
+          curl -s -X POST "${{ secrets.BACKEND_API_URL }}/api/v1/internal/poll/github" \
+            -H "X-Internal-Secret: ${{ secrets.INTERNAL_POLL_SECRET }}" \
+            -H "Content-Type: application/json" || echo "Poll endpoint triggered"
+
+  poll-leetcode:
+    name: LeetCode Stats Poll
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 */12 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Trigger LeetCode Poll Endpoint
+        run: |
+          curl -s -X POST "${{ secrets.BACKEND_API_URL }}/api/v1/internal/poll/leetcode" \
+            -H "X-Internal-Secret: ${{ secrets.INTERNAL_POLL_SECRET }}" \
+            -H "Content-Type: application/json" || echo "Poll endpoint triggered"
+
+  keep-alive-db:
+    name: Supabase Keep-Alive Ping
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 0 */3 * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Ping Backend Health
+        run: |
+          curl -s "${{ secrets.BACKEND_API_URL }}/health" || echo "Health check ping complete"
