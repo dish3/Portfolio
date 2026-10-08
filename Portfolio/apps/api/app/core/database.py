@@ -47,17 +47,22 @@ def build_async_database_url(raw_url: str) -> str:
 
 
 _engine: Optional[AsyncEngine] = None
-_session_factory: Optional[async_sessionmaker[AsyncSession]] = None
+_last_url: Optional[str] = None
 
 
 def get_engine() -> AsyncEngine:
     """
     Lazily creates and returns the singleton AsyncEngine instance.
     Configured for high resilience with Supabase connection pooler.
+    Automatically re-initializes if settings.DATABASE_URL is updated.
     """
-    global _engine, _session_factory
-    if _engine is None:
-        async_url = build_async_database_url(settings.DATABASE_URL)
+    global _engine, _session_factory, _last_url
+    from app.core.config import Settings
+    current_settings = Settings()
+    current_url = current_settings.DATABASE_URL
+    if _engine is None or _last_url != current_url:
+        _last_url = current_url
+        async_url = build_async_database_url(current_url)
         connect_args = {
             "ssl": "require",
             "server_settings": {
@@ -66,7 +71,7 @@ def get_engine() -> AsyncEngine:
         }
         _engine = create_async_engine(
             async_url,
-            echo=(settings.LOG_LEVEL.upper() == "DEBUG"),
+            echo=(current_settings.LOG_LEVEL.upper() == "DEBUG"),
             pool_pre_ping=True,
             connect_args=connect_args,
         )
@@ -79,6 +84,7 @@ def get_engine() -> AsyncEngine:
         )
         logger.info("SQLAlchemy 2.x asyncpg engine initialized successfully.")
     return _engine
+
 
 
 def get_session_factory() -> async_sessionmaker[AsyncSession]:
