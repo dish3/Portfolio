@@ -8,9 +8,16 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+from pathlib import Path
+
+_current_file = Path(__file__).resolve()
+_root_env = _current_file.parents[4] / ".env"
+_api_env = _current_file.parents[2] / ".env"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(_root_env, _api_env, ".env"),
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -21,8 +28,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "NOVA"
     OWNER_NAME: str = "Disha"
 
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/nova"
+    # Database — strictly loaded from environment/.env, no localhost fallback
+    DATABASE_URL: str = ""
     DATABASE_DIRECT_URL: str = ""
 
     # GitHub sources monitored by webhook fallback polling
