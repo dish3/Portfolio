@@ -5,6 +5,7 @@ Sourced strictly from NOVA_04_AI_Agents_Specification.md §1 and NOVA_06 §13.
 
 import logging
 from typing import Dict, Any, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.gemini_client import gemini_client
 from app.schemas.models import PendingChangeCreate
@@ -30,6 +31,7 @@ class GitHubAgent:
     @staticmethod
     async def process_repository(
         repo_payload: Dict[str, Any],
+        db: Optional[AsyncSession] = None,
         existing_project_id: Optional[str] = None
     ) -> Dict[str, Any]:
         repo_name = repo_payload.get("name", "Unknown Repo")
@@ -84,5 +86,5 @@ Recent Commits:
             ai_rationale=ai_rationale,
         )
 
-        queued_change = ApprovalService.propose_change(proposal)
+        queued_change = await ApprovalService.propose_change(proposal, db=db)
         return queued_change

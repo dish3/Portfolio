@@ -36,6 +36,9 @@ async def get_db_health(db: AsyncSession = Depends(get_db)) -> dict:
         s_res = await db.execute(text("SELECT COUNT(*) FROM skills;"))
         skills_count = s_res.scalar() or 0
 
+        pc_res = await db.execute(text("SELECT COUNT(*) FROM pending_changes;"))
+        pending_changes_count = pc_res.scalar() or 0
+
         return {
             "status": "connected",
             "database": current_db,
@@ -43,6 +46,7 @@ async def get_db_health(db: AsyncSession = Depends(get_db)) -> dict:
             "pgvector": "enabled" if vector_enabled else "disabled",
             "projects_count": projects_count,
             "skills_count": skills_count,
+            "pending_changes_count": pending_changes_count,
         }
     except Exception as e:
         err_str = str(e)
@@ -53,6 +57,7 @@ async def get_db_health(db: AsyncSession = Depends(get_db)) -> dict:
             "error_type": type(e).__name__,
             "error_message": err_str,
         }
+
 
 
 

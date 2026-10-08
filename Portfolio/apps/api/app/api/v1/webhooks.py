@@ -4,9 +4,11 @@ Sourced from NOVA_01 §2 and NOVA_07 §1.
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Header, Request, HTTPException, status
+from fastapi import APIRouter, Header, Request, HTTPException, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.logging import logger
+from app.core.database import get_db
 from app.connectors.github import verify_github_signature
 from app.agents.github_agent import GitHubAgent
 
@@ -18,6 +20,7 @@ async def handle_github_webhook(
     request: Request,
     x_hub_signature_256: str = Header(None, alias="X-Hub-Signature-256"),
     x_github_event: str = Header("push", alias="X-GitHub-Event"),
+    db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
     body_bytes = await request.body()
     webhook_secret = getattr(settings, "GITHUB_WEBHOOK_SECRET", "")
@@ -54,11 +57,13 @@ async def handle_github_webhook(
         "recent_commits": [c.get("message") for c in payload.get("commits", [])[:5]],
     }
 
-    proposal = await GitHubAgent.process_repository(repo_payload)
+    proposal = await GitHubAgent.process_repository(repo_payload, db=db)
 
     return {
         "status": "queued_for_approval",
         "event": x_github_event,
+        "proposal_id": str(proposal.get("id")) if proposal.get("id") else None,
         "proposal_agent": proposal.get("agent"),
         "entity_type": proposal.get("entity_type"),
     }
+

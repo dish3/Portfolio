@@ -35,10 +35,20 @@ class ApprovalService:
             proposal.entity_id
         )
         if db is not None:
+            entity_id_val: Optional[UUID] = None
+            if proposal.entity_id:
+                if isinstance(proposal.entity_id, UUID):
+                    entity_id_val = proposal.entity_id
+                else:
+                    try:
+                        entity_id_val = UUID(str(proposal.entity_id))
+                    except (ValueError, TypeError):
+                        entity_id_val = None
+
             pending_obj = PendingChange(
                 agent=proposal.agent,
                 entity_type=proposal.entity_type,
-                entity_id=proposal.entity_id,
+                entity_id=entity_id_val,
                 diff=proposal.diff,
                 ai_rationale=proposal.ai_rationale,
             )
